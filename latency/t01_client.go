@@ -109,9 +109,9 @@ func main() {
 
 	var difference float64 = float64(total) / float64(iters)
 
-	//fmt.Printf("\nSource: %s\nDestination: %s\n", client_addr, server_addr)
-	fmt.Prinf("Client: %s\n", client_addr)
-	fmt.Prinf("Server: %s\n", server_addr)
+	fmt.Printf("\nClient: %s\nServer: %s\n", client_addr, server_addr)
+	//fmt.Prinf("Client: %s\n", client_addr)
+	//fmt.Prinf("Server: %s\n", server_addr)
 	fmt.Println("Output:\n")
 	fmt.Printf(" RTT: %.3fs\n", difference/1e9) //convert from ns to seconds
 	fmt.Printf(" Latency: %.3fs\n", difference/2e9)
