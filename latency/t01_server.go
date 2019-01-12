@@ -1,3 +1,5 @@
+//https://github.com/netsec-ethz/scion-homeworks/blob/master/latency/timestamp_server.go
+
 package main
 
 import (
