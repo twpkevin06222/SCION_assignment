@@ -1,4 +1,5 @@
 // reference https://github.com/perrig/scionlab/blob/master/sensorapp/sensorfetcher/sensorfetcher.go
+// reference https://github.com/netsec-ethz/scion-homeworks/blob/master/latency/timestamp_server.go
 
 package main
 
@@ -26,8 +27,8 @@ func printUsage() {
 }
 
 const (
-	n     = 20 //number of iterations
-	n_max = 40 //max number of iterations
+	n_iters = 20 //number of iterations
+	n_max   = 40 //max number of iterations
 )
 
 func main() {
@@ -43,8 +44,8 @@ func main() {
 	)
 
 	// Fetch arguments from command line
-	flag.StringVar(&client_addr, "s", "", "Client SCION Address")
-	flag.StringVar(&server_addr, "d", "", "Server SCION Address")
+	flag.StringVar(&client_addr, "c", "", "Client SCION Address")
+	flag.StringVar(&server_addr, "s", "", "Server SCION Address")
 	flag.Parse()
 
 	// Create the SCION UDP socket
@@ -69,22 +70,25 @@ func main() {
 	udpConnection, err = snet.DialSCION("udp4", local, remote)
 	check(err)
 
-	receivePacketBuffer := make([]byte, 2500)
-	sendPacketBuffer := make([]byte, 16)
+	receivePacketBuffer := make([]byte, 2500) //dynamic array of size 25000
+	sendPacketBuffer := make([]byte, 16)      //dynamic array of size 16
 
+	//create seed for random id
 	seed := rand.NewSource(time.Now().UnixNano())
 
 	// Here comes the iteration for calculating average
 	//initialize for sum
-	var total int64 = 0
-	iters := 0
-	num_tries := 0
+	var sum int64 = 0
+	i := 0 //iterations
+	k := 0 //attempts
 
-	for iters < n && num_tries < n_max {
-		num_tries += 1
+	for i < n_iters && k < n_max {
+		k += 1
 
+		// If you seed a source with the same number, it
+		// produces the same sequence of random numbers.
 		id := rand.New(seed).Uint64()
-		n := binary.PutUvarint(sendPacketBuffer, id)
+		n := binary.PutUvarint(sendPacketBuffer, id) //encodes sendPacket
 		sendPacketBuffer[n] = 0
 
 		time_sent := time.Now()
@@ -94,20 +98,20 @@ func main() {
 		_, _, err = udpConnection.ReadFrom(receivePacketBuffer)
 		check(err)
 
-		ret_id, n := binary.Uvarint(receivePacketBuffer) //decodes uint64
-		if ret_id == id {
+		id_re, n := binary.Uvarint(receivePacketBuffer) //decodes uint64
+		if id_re == id {
 			time_received, _ := binary.Varint(receivePacketBuffer[n:]) //decodes int64
 			diff := (time_received - time_sent.UnixNano())             //unit:nanoseconds
-			total += diff
-			iters += 1
+			sum += diff
+			i += 1
 		}
 	}
 
-	if iters != n {
+	if i != n_iters {
 		check(fmt.Errorf("Error, exceeded maximum number of attempts"))
 	}
 
-	var difference float64 = float64(total) / float64(iters)
+	var difference float64 = float64(sum) / float64(i)
 
 	fmt.Printf("\nClient: %s\nServer: %s\n", client_addr, server_addr)
 	//fmt.Prinf("Client: %s\n", client_addr)
