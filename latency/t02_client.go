@@ -97,7 +97,7 @@ func main() {
 
 		_, _, err = udpConnection.ReadFrom(receivePacketBuffer)
 		check(err)
-
+		time_received := time.Now()
 		id_re, n := binary.Uvarint(receivePacketBuffer) //decodes uint64
 		if id_re == id {
 			diff := (time_received.UnixNano() - time_sent.UnixNano()) //unit:nanoseconds
